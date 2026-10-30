@@ -4,13 +4,14 @@ from zipfile import ZipFile
 import pytest
 from nazaret_quant.b3_cotahist import parse_quote, inspect_archive
 
-def example(market="010", symbol="ABCD3", date="20251021", open_=1000, high=1100, low=900, close=1050):
+def example(market="010", symbol="ABCD3", date="20251021", open_=1000, high=1100, low=900, close=1050, factor=1):
     f=[" "]*245
     def put(a,b,t): f[a:b]=list(str(t).ljust(b-a)[:b-a])
     def num(a,b,n): f[a:b]=list(str(n).zfill(b-a))
     put(0,2,"01");put(2,10,date);put(24,27,market);put(12,24,symbol)
     for a,b,v in [(56,69,open_),(69,82,high),(82,95,low),(95,108,1020),(108,121,close),
                   (147,152,100),(152,170,5000),(170,188,5000000)]:num(a,b,v)
+    num(210,217,factor)
     put(230,242,"BRTEST000000")
     return "".join(f).encode("latin-1")
 
@@ -40,3 +41,28 @@ def test_inspect_zip_and_lockbox(tmp_path):
     lock=tmp_path/"COTAHIST_A2026.ZIP"
     p.rename(lock)
     with pytest.raises(PermissionError): inspect_archive(lock)
+
+def test_quote_factor_is_explicit_and_ohlc_not_silently_rescaled():
+    usual = parse_quote(example())
+    alternate = parse_quote(example(factor=1000))
+    assert usual["quote_factor"] == 1
+    assert alternate["quote_factor"] == 1000
+    assert alternate["close"] == usual["close"]  # quoted value, NOT unit price
+    with pytest.raises(ValueError, match="Fator"):
+        parse_quote(example(factor=0))
+
+
+def test_fractional_zero_ohlc_with_trades_is_classified_not_imputed(tmp_path):
+    p = tmp_path / "COTAHIST_A2025.ZIP"
+    # This fixture reproduces the observed 2025 anomaly, without raw market data.
+    anomaly = example(market="020", open_=0, high=0, low=0, close=0, factor=1000)
+    with ZipFile(p, "w") as z:
+        z.writestr("COTAHIST_A2025.TXT", b"00HEADER\n" + anomaly + b"\n"
+                   + example(factor=100) + b"\n99FOOTER\n")
+    q = inspect_archive(p)
+    assert q["counts"]["invalid_records"] == 1
+    assert q["counts"]["fractional_zero_ohlc_with_trades"] == 1
+    assert q["counts"]["valid_records"] == 1
+    assert q["counts"]["non_unit_quote_factor_records"] == 1
+    assert q["quote_factor_counts"] == {100: 1}
+    assert q["invalid_samples"][0]["category"] == "fractional_zero_ohlc_with_trades"
