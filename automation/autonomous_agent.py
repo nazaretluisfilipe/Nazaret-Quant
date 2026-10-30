@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -105,20 +106,41 @@ Se a mudança não for claramente justificável, responda {"summary":"sem altera
             "maxOutputTokens": 6144,
         },
     }
-    model = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
-    if not model or "/" in model or ":" in model:
-        raise ValueError("Nome de modelo inválido")
-    url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent"
-    request = urllib.request.Request(
-        url, data=json.dumps(body).encode("utf-8"), method="POST",
-        headers={"Content-Type": "application/json", "x-goog-api-key": key},
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=210) as response:
-            answer = json.load(response)
-    except urllib.error.HTTPError as error:
-        message = error.read(600).decode("utf-8", errors="replace")
-        raise RuntimeError("Gemini HTTP " + str(error.code) + ": " + message) from None
+    # Legacy workflow uses 3.8 Flash, which recently returned HTTP 503 (capacity).
+    # Prefer lightweight models for free, scheduled, small edits.
+    requested_model = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash-lite")
+    if requested_model == "gemini-3.8-flash":
+        requested_model = "gemini-3.5-flash-lite"
+    models = list(dict.fromkeys((requested_model, "gemini-3.1-flash-lite")))
+    answer = None
+    failures = []
+    for model in models:
+        if not model or "/" in model or ":" in model:
+            raise ValueError("Nome de modelo inválido")
+        url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent"
+        for attempt in range(2):
+            request = urllib.request.Request(
+                url, data=json.dumps(body).encode("utf-8"), method="POST",
+                headers={"Content-Type": "application/json", "x-goog-api-key": key},
+            )
+            try:
+                with urllib.request.urlopen(request, timeout=65) as response:
+                    answer = json.load(response)
+                print("Modelo disponível:", model)
+                break
+            except urllib.error.HTTPError as error:
+                details = error.read(350).decode("utf-8", errors="replace")
+                failures.append(f"{model}: HTTP {error.code}: {details}")
+                if error.code not in (408, 429, 500, 502, 503, 504):
+                    raise RuntimeError(f"Falha permanente na API {model}: HTTP {error.code}: {details}") from None
+            except (TimeoutError, urllib.error.URLError) as error:
+                failures.append(f"{model}: erro de rede: {type(error).__name__}")
+            if attempt == 0:
+                time.sleep(3)
+        if answer is not None:
+            break
+    if answer is None:
+        raise RuntimeError("API temporariamente indisponível após tentativas limitadas: " + " | ".join(failures)[-1100:])
     chunks = answer.get("candidates", [{}])[0].get("content", {}).get("parts", [])
     model_text = "".join(part.get("text", "") for part in chunks)
     proposed = validate(json.loads(model_text))
