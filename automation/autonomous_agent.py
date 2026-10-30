@@ -28,7 +28,7 @@ def allowed(path):
     The agent must NEVER modify the accounting/strategy/engine/CLI or master
     protocols. New isolated research modules get independent CI before review.
     """
-    if not isinstance(path, str) or "\\\\" in path or path.startswith("/"):
+    if not isinstance(path, str) or "\\" in path or path.startswith("/"):
         return False
     p = Path(path)
     if not p.parts or ".." in p.parts or "." in p.parts:

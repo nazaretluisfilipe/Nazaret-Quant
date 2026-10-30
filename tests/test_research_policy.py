@@ -56,3 +56,7 @@ def test_cannot_write_core_logic_even_with_companion_test():
             {"path":"src/nazaret_quant/ledger.py","content":"pass\n"},
             {"path":"tests/test_research_alibi.py","content":"def test_ok():\n    assert True\n"}
         ]})
+
+
+def test_backslash_separators_denied_even_inside_allowed_name():
+    assert not agent.allowed("docs/RESEARCH_NOTE_unsafe\\name.md")
