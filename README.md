@@ -78,3 +78,14 @@ Todas as execuções nesta versão recebem parecer `INCONCLUSIVE`. Os portões G
 Consulte `docs/STATUS.md` para o que foi implementado, `docs/VIABILIDADE.md` para evidências pendentes e `docs/CONTINUIDADE.md` para a ordem da próxima execução. O pacote inclui testes, relatórios HTML/CSV/JSON e o registro sintético de tentativas. A automação GitHub Actions está preparada; só foi validada localmente, pois não houve envio a um repositório remoto.
 
 O próximo insumo necessário é uma base de dados com licença e proveniência verificáveis. Uma corretora é necessária para estudar a rota operacional; sua ausência não impede a pesquisa offline. Não envie senhas ou tokens no chat.
+
+
+## Histórico real B3 — importação de qualidade (sem backtest)
+
+Foi adicionado um leitor **offline** do formato COTAHIST de largura fixa, sem dependências adicionais:
+
+```bash
+python -m nazaret_quant.b3_cotahist data/raw/B3/COTAHIST_A2025.ZIP
+```
+
+O comando apresenta contagens e anomalias; opcionalmente `--output-csv data/processed/spot_2025.csv` grava um CSV **local**, não versionado. O arquivo de 2026 é bloqueado por padrão como lockbox. A leitura de 2025, registrada em `docs/QA_B3_2025.md`, **não comprova estratégia lucrativa** e não habilita o simulador de 5 minutos, pois COTAHIST oferece dados diários sem ajustes corporativos. Não publique ZIPs/CSVs de mercado ou credenciais.

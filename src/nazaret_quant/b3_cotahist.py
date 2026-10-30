@@ -112,7 +112,7 @@ def inspect_archive(path: Path, *, output: Path | None = None, max_records: int 
                     if record is None:
                         counts["unsupported_market"] += 1
                         continue
-                    key=(record["date"],record["symbol"],record["market"])
+                    key=record["date"]+"|"+record["symbol"]+"|"+record["market"]
                     if key in seen:
                         counts["duplicate_records"] += 1
                         continue

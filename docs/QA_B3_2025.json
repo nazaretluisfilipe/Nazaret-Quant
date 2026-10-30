@@ -1,0 +1,67 @@
+{
+  "input": "COTAHIST_A2025.ZIP",
+  "source_sha256": "6cc0ad851c8f605ca30418acac48be81f1767f6ed05b4f563772d06ae448047d",
+  "period_start": "2025-01-02",
+  "period_end": "2025-12-30",
+  "counts": {
+    "lines_seen": 3174700,
+    "non_quote_records": 2,
+    "quote_records_seen": 3174698,
+    "valid_records": 435910,
+    "spot_lot": 335874,
+    "spot_fractional": 100036,
+    "unsupported_market": 2738729,
+    "invalid_records": 59
+  },
+  "invalid_samples": [
+    {
+      "line": 9959,
+      "error": "OHLC inconsistente"
+    },
+    {
+      "line": 13612,
+      "error": "OHLC inconsistente"
+    },
+    {
+      "line": 31533,
+      "error": "OHLC inconsistente"
+    },
+    {
+      "line": 58024,
+      "error": "OHLC inconsistente"
+    },
+    {
+      "line": 61512,
+      "error": "OHLC inconsistente"
+    },
+    {
+      "line": 62634,
+      "error": "OHLC inconsistente"
+    },
+    {
+      "line": 63947,
+      "error": "OHLC inconsistente"
+    },
+    {
+      "line": 87924,
+      "error": "OHLC inconsistente"
+    },
+    {
+      "line": 116516,
+      "error": "OHLC inconsistente"
+    },
+    {
+      "line": 117520,
+      "error": "OHLC inconsistente"
+    }
+  ],
+  "date_type": "daily_unadjusted",
+  "research_status": "ENGINEERING_QA_ONLY_NO_ALPHA_CLAIM",
+  "limitations": [
+    "Sem ajustes corporativos; não usar para P&L antes de validar proventos/desdobramentos",
+    "Sem candles intradiários nem spread executável",
+    "Amostra parcial não habilita pesquisa econômica",
+    "Autorização/licença e uso de dados devem ser verificados"
+  ],
+  "live_trading": "BLOCKED"
+}
