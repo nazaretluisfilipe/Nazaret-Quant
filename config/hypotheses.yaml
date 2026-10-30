@@ -1,0 +1,31 @@
+version: 0.1.0
+status: DRAFT_REQUIRES_REAL_DATA
+lockbox: BLOCKED
+live_trading: BLOCKED
+selection_budget_frozen: false
+# A grade só poderá ser congelada após a viabilidade dos dados e antes de resultados condicionais.
+families:
+  H1-M:
+    horizon: intraday_5m_exit_up_to_30m
+    status: FAMILY_ONLY_NOT_OPERATIONALIZED
+    assets: []
+    development_period: null
+    confirmation_period: null
+  H1-R:
+    horizon: intraday_5m_exit_up_to_30m
+    status: FAMILY_ONLY_NOT_OPERATIONALIZED
+    assets: []
+    development_period: null
+    confirmation_period: null
+  H2-R:
+    horizon: daily_exit_3_to_5_sessions
+    status: BLOCKED_REQUIRES_CORPORATE_ACTIONS_AND_CALENDAR
+  H2-T:
+    horizon: daily_weekly
+    status: BLOCKED_REQUIRES_CORPORATE_ACTIONS_AND_CALENDAR
+baselines_implemented:
+  - no_trade
+  - momentum
+  - reversal
+  - random_unmatched
+scientific_decision: INCONCLUSIVE

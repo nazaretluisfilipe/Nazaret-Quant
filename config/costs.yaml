@@ -1,0 +1,13 @@
+# APENAS HIPÓTESES DE ENGENHARIA. Não são tarifas de corretora ou da B3.
+base:
+  half_spread_bps: 5.0
+  slippage_bps: 5.0
+  fee_bps: 3.0
+  fixed_fee: 0.0
+  confirmed: false
+adverse:
+  half_spread_bps: 25.0
+  slippage_bps: 25.0
+  fee_bps: 5.0
+  fixed_fee: 0.0
+  confirmed: false

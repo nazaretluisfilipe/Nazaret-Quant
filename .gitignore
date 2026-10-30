@@ -1,53 +1,8 @@
-# Python
 __pycache__/
-*.py[cod]
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-htmlcov/
 *.egg-info/
-build/
-dist/
-
-# Local environments
+.pytest_cache/
 .venv/
-venv/
-env/
-ENV/
-.conda/
-
-# Credentials / local configuration
-.env
-.env.*
-!.env.example
-*.pem
-*.p12
-*.pfx
-*.key
-secrets.*
-credentials.*
-!credentials.example.*
-
-# Data, reports and local state
-data/raw/
-data/processed/
-data/interim/
-data/external/
-reports/generated/
-*.duckdb
-*.duckdb.wal
-*.sqlite
-*.sqlite3
-*.db
-
-# IDE / system
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-
-# Archives
-*.rar
-*.zip
-*.7z
+data/
+*.sqlite*
+.env*
+!config/

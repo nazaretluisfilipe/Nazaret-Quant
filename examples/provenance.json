@@ -1,0 +1,8 @@
+{
+  "provider": "Nazaret synthetic generator",
+  "license": "CC0 synthetic fixtures only",
+  "license_evidence": "Generated locally without market data",
+  "storage_authorized": true,
+  "synthetic": true,
+  "partition": "exploration"
+}

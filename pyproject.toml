@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nazaret-quant"
+version = "0.1.0"
+description = "Pesquisa quantitativa offline sem integração de ordens"
+requires-python = ">=3.12"
+dependencies = ["pandas==2.2.3", "numpy==2.2.6", "pyarrow==26.0.0", "duckdb==2.0.0", "PyYAML==6.0.2", "scipy==1.15.3"]
+
+[project.optional-dependencies]
+test = ["pytest==9.2.0"]
+
+[project.scripts]
+nazaret = "nazaret_quant.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
