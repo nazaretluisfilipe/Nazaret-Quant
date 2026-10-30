@@ -83,7 +83,7 @@ def propose(destination):
     for path in READ_CONTEXT:
         file = ROOT / path
         if file.is_file():
-            context.append("ARQUIVO: " + path + "\n" + file.read_text(encoding="utf-8")[:14000])
+            context.append("ARQUIVO: " + path + "\n" + file.read_text(encoding="utf-8")[:7500])
     instructions = """Você é um engenheiro Python trabalhando no laboratório NAZARET QUANT.
 Escolha UMA pequena melhoria fundamentada no plano C1-C2: qualidade B3, tratamento conservador
 de dados, testes, incerteza ou documentação científica. Nenhum backtest de lucro,
@@ -102,7 +102,7 @@ Se a mudança não for claramente justificável, responda {"summary":"sem altera
         "generationConfig": {
             "responseMimeType": "application/json",
             "temperature": 0.15,
-            "maxOutputTokens": 8192,
+            "maxOutputTokens": 6144,
         },
     }
     model = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
@@ -114,7 +114,7 @@ Se a mudança não for claramente justificável, responda {"summary":"sem altera
         headers={"Content-Type": "application/json", "x-goog-api-key": key},
     )
     try:
-        with urllib.request.urlopen(request, timeout=100) as response:
+        with urllib.request.urlopen(request, timeout=210) as response:
             answer = json.load(response)
     except urllib.error.HTTPError as error:
         message = error.read(600).decode("utf-8", errors="replace")
