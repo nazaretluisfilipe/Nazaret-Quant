@@ -14,7 +14,7 @@ from zipfile import ZipFile
 
 MARKETS = {"010": "spot_lot", "020": "spot_fractional"}
 FIELDS = ("date", "symbol", "market", "open", "high", "low", "average", "close",
-          "trades", "quantity", "financial_volume", "isin")
+          "trades", "quantity", "financial_volume", "isin", "quote_factor")
 
 def _integer(record: str, start: int, end: int) -> int:
     value = record[start:end]
@@ -46,13 +46,16 @@ def parse_quote(raw: bytes) -> dict | None:
         ("average",95,108), ("close",108,121))}
     if min(prices.values()) <= 0 or prices["low"] > min(prices["open"],prices["close"]) or prices["high"] < max(prices["open"],prices["close"]) or prices["high"] < prices["low"]:
         raise ValueError("OHLC inconsistente")
+    quote_factor = _integer(r,210,217)
+    if quote_factor <= 0:
+        raise ValueError("Fator de cotação inválido")
     trades = _integer(r,147,152)
     quantity = _integer(r,152,170)
     turnover = _integer(r,170,188) / 100
     return {"date": f"{date[:4]}-{date[4:6]}-{date[6:]}", "symbol": symbol,
             "market": MARKETS[market], **prices, "trades": trades,
             "quantity": quantity, "financial_volume": turnover,
-            "isin": r[230:242].strip()}
+            "isin": r[230:242].strip(), "quote_factor": quote_factor}
 
 def source_hash(path: Path) -> str:
     h = hashlib.sha256()
@@ -60,6 +63,22 @@ def source_hash(path: Path) -> str:
         for b in iter(lambda: f.read(1024*1024),b""):
             h.update(b)
     return h.hexdigest()
+
+
+def _rejection_category(raw: bytes, error: Exception) -> str:
+    """Categoriza anomalia sem deduzir preços ausentes ou corrigir dados."""
+    if str(error) != "OHLC inconsistente" or len(raw) < 245 or raw[24:27] != b"020":
+        return "other_invalid"
+    try:
+        ohlc = (raw[56:69], raw[69:82], raw[82:95], raw[108:121])
+        if (all(field.isdigit() and int(field) == 0 for field in ohlc)
+            and int(raw[95:108]) > 0
+            and int(raw[147:152]) > 0
+            and int(raw[152:170]) > 0):
+            return "fractional_zero_ohlc_with_trades"
+    except ValueError:
+        pass
+    return "other_invalid"
 
 def inspect_archive(path: Path, *, output: Path | None = None, max_records: int | None = None,
                     lockbox: bool = False) -> dict:
@@ -80,6 +99,7 @@ def inspect_archive(path: Path, *, output: Path | None = None, max_records: int 
     first = last = None
     seen = set()
     bad_examples = []
+    quote_factors = Counter()
     writer = None
     fout = None
     try:
@@ -106,8 +126,11 @@ def inspect_archive(path: Path, *, output: Path | None = None, max_records: int 
                         record=parse_quote(raw.rstrip(b"\r\n"))
                     except (ValueError,UnicodeError) as exc:
                         counts["invalid_records"] += 1
+                        category = _rejection_category(raw.rstrip(b"\r\n"), exc)
+                        counts[category] += 1
                         if len(bad_examples)<10:
-                            bad_examples.append({"line":counts["lines_seen"],"error":str(exc)})
+                            bad_examples.append({"line":counts["lines_seen"],"error":str(exc),
+                                                 "category":category})
                         continue
                     if record is None:
                         counts["unsupported_market"] += 1
@@ -118,6 +141,9 @@ def inspect_archive(path: Path, *, output: Path | None = None, max_records: int 
                         continue
                     seen.add(key)
                     counts["valid_records"] += 1
+                    quote_factors[record["quote_factor"]] += 1
+                    if record["quote_factor"] != 1:
+                        counts["non_unit_quote_factor_records"] += 1
                     first=min(first,record["date"]) if first else record["date"]
                     last=max(last,record["date"]) if last else record["date"]
                     counts[record["market"]] += 1
@@ -131,10 +157,12 @@ def inspect_archive(path: Path, *, output: Path | None = None, max_records: int 
             fout.close()
     quality={"input":path.name,"source_sha256":source_hash(path),
              "period_start":first,"period_end":last,"counts":dict(counts),
-             "invalid_samples":bad_examples,"date_type":"daily_unadjusted",
+             "invalid_samples":bad_examples,"quote_factor_counts":dict(sorted(quote_factors.items())),
+             "date_type":"daily_unadjusted",
              "research_status":"ENGINEERING_QA_ONLY_NO_ALPHA_CLAIM",
              "limitations":["Sem ajustes corporativos; não usar para P&L antes de validar proventos/desdobramentos",
                             "Sem candles intradiários nem spread executável",
+                            "Fatores de cotação não unitários permanecem como metadados; não há preço unitário convertido",
                             "Amostra parcial não habilita pesquisa econômica",
                             "Autorização/licença e uso de dados devem ser verificados"],
              "live_trading":"BLOCKED"}
