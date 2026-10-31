@@ -12,15 +12,15 @@ def stress(events, **overrides):
 
 def test_fixed_risk_never_scales_up_after_consecutive_losses():
     result = stress([("D1", 1), ("D1", 1), ("D1", 1), ("D1", 1),
-                     ("D2", 2), ("D2", 1), ("D3", 1)])
+                     ("D2", 2.5), ("D2", 1), ("D3", 1)])
     executed = [e for e in result["events"] if e["executed"]]
-    assert [e["hypothetical_loss_brl"] for e in executed] == [2, 2, 2, 4, 2]
+    assert [e["hypothetical_loss_brl"] for e in executed] == [2, 2, 2, 5]
     assert {e["fixed_planned_risk_brl"] for e in result["events"]} == {2}
-    assert result["executed_attempts"] == 5
-    assert result["blocked_attempts"] == 2
-    assert result["final_equity_brl"] == 238
+    assert result["executed_attempts"] == 4
+    assert result["blocked_attempts"] == 3
+    assert result["final_equity_brl"] == 239
     assert result["total_loss_trigger_exceeded"]
-    assert result["max_drawdown_fraction"] == pytest.approx(12/250)
+    assert result["max_drawdown_fraction"] == pytest.approx(11/250)
     assert result["status"] == "DETERMINISTIC_STRESS_ONLY_NO_RUIN_PROBABILITY"
 
 
