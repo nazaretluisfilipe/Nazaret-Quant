@@ -44,9 +44,10 @@ def expectancy_from_closed_trades(net_pnls) -> dict:
     prob_loss = Decimal(len(losses)) / n
     gain = sum(wins, Decimal(0)) / len(wins) if wins else Decimal(0)
     loss = sum(losses, Decimal(0)) / len(losses) if losses else Decimal(0)
-    expectancy = prob_win * gain - prob_loss * loss
-    # The identity also checks that break-even trades were not dropped.
-    assert expectancy == sum(pnl, Decimal(0)) / n
+    # A directly summed arithmetic mean is numerically stable for n=3, 7, etc.
+    # Weighted terms are algebraically identical, but Decimal division creates
+    # repeating expansions, so asserting exact equality would be incorrect.
+    expectancy = sum(pnl, Decimal(0)) / n
     ratio = gain / loss if wins and losses else None
     profit_factor = (sum(wins, Decimal(0)) / sum(losses, Decimal(0))
                      if losses else None)

@@ -113,3 +113,11 @@ def test_invalid_pnl_rejected(bad):
 def test_invalid_curve_rejected(bad):
     with pytest.raises(ValueError):
         maximum_drawdown(bad)
+
+
+def test_repeating_decimal_expectancy_does_not_raise_or_round_away_results():
+    r = expectancy_from_closed_trades([1.0, 1.0, -2.0])
+    assert r["expectancy_brl"] == 0.0
+    mixed = expectancy_from_closed_trades([1.0, 1.0, -1.0])
+    assert mixed["expectancy_brl"] == pytest.approx(1/3)
+    assert mixed["wins"] == 2 and mixed["losses"] == 1
