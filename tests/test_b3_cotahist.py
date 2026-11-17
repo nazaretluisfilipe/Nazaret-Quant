@@ -1,4 +1,3 @@
-"""Testes do importador diário B3 com registros artificiais de largura fixa."""
 from pathlib import Path
 from zipfile import ZipFile
 import pytest
@@ -40,3 +39,21 @@ def test_inspect_zip_and_lockbox(tmp_path):
     lock=tmp_path/"COTAHIST_A2026.ZIP"
     p.rename(lock)
     with pytest.raises(PermissionError): inspect_archive(lock)
+
+def test_inspect_archive_malformed_and_edge_cases(tmp_path):
+    p = tmp_path / "COTAHIST_A2025.ZIP"
+    # Inclui linha curta, linha com data inválida e linhas duplicadas com variações
+    content = (
+        b"00HEADER\n"
+        b"01SHORTLINE\n"
+        + example(date="20251301") + b"\n"
+        + example(symbol="PETR4", date="20250102") + b"\n"
+        + example(symbol="PETR4", date="20250102") + b"\n"
+        + b"99FOOTER\n"
+    )
+    with ZipFile(p, "w") as z:
+        z.writestr("COTAHIST_A2025.TXT", content)
+    res = inspect_archive(p)
+    assert res["counts"]["invalid_records"] >= 2
+    assert res["counts"]["valid_records"] == 1
+    assert res["counts"]["duplicate_records"] == 1
